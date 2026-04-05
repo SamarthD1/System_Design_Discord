@@ -9,7 +9,7 @@ This document tracks the daily progress of the scalable chat system simulation, 
 | **2 April** | System Thinking | App becomes popular during a live event, 50,000 users join, one channel dominates | Write where system will fail and why | 1-page explanation | Thinking before coding | Do they identify bottlenecks (memory, load, hotspots)? | ✅ **Completed:** CPU, memory, and hotspot bottlenecks clearly identified in `system_failure_analysis.md`. |
 | **3 April** | Basic System | Small system works fine with few users | Build chat system (users, channels, messages) | Working code + message count output | Illusion that system is "complete" | Does the system actually store and show data? | ✅ **Completed:** `april3_basic_system.py` stores message objects in a list and `stats()` displays the counts. |
 | **4 April** | Scaling Awareness | Users increase 100x, system still single server | Simulate large message load and observe behavior | Code + short observation note | System slowdown and inefficiency | Did they actually simulate load or just write theory? | ✅ **Completed:** Simulated 100,000 messages — measured **1,628x slowdown**. Documented in `april4_observation.md`. |
-| **5 April** | Shards Introduction | Multiple servers available but no distribution logic | Create shards and store data separately | Code showing messages per shard | Confusion about routing logic | Are shards independent (no global storage)? | ⏳ Pending |
+| **5 April** | Shards Introduction | Multiple servers available but no distribution logic | Create shards and store data separately | Code showing messages per shard | Confusion about routing logic | Are shards independent (no global storage)? | ✅ **Completed:** 3 independent shards verified. Messages per shard output in `april5_shards_introduction.py`. |
 | **6 April** | User-Based Sharding | One highly active user sends massive traffic | Route using user_id | Code + shard distribution output | Load imbalance (one shard overloaded) | Do they show uneven distribution clearly? | ⏳ Pending |
 | **7 April** | Channel-Based Sharding | One channel becomes viral (event spike) | Route using channel_id | Code + comparison note | Hotspot problem (single shard overload) | Do they compare with previous strategy properly? | ⏳ Pending |
 | **8 April** | Hash-Based Sharding | Need better distribution under uneven load | Implement hashing and choose key | Code + explanation of key choice | Decision complexity (what to hash?) | Do they justify their choice logically? | ⏳ Pending |
@@ -44,3 +44,13 @@ This document tracks the daily progress of the scalable chat system simulation, 
 - Measured a **1,628x slowdown** compared to the Day 3 small load baseline.
 - Wrote observations in `april4_observation.md`, documenting memory growth and CPU bottlenecks.
 - **Hidden Complexity Introduced:** System slowdown and inefficiency — proved the single-server model is fundamentally broken at scale.
+
+### ✅ April 5: Shards Introduction
+**Focus:** Multiple servers available but no distribution logic.
+**What was done:**
+- Created `april5_shards_introduction.py` with independent `Shard` and `ShardManager` classes.
+- Each shard has its **own isolated storage** — no global `messages` list exists on the manager.
+- Used random routing (intentionally naive) to distribute 10,000 messages across 3 shards.
+- Output showed roughly even distribution: Shard 0: 33.5%, Shard 1: 32.3%, Shard 2: 34.2%.
+- Built an **independence verification** that proves all shards use separate memory addresses.
+- **Hidden Complexity Introduced:** Confusion about routing logic — random assignment works here but won't scale with real requirements (user affinity, channel locality).
