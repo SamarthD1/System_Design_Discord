@@ -11,7 +11,7 @@ This document tracks the daily progress of the scalable chat system simulation, 
 | **4 April** | Scaling Awareness | Users increase 100x, system still single server | Simulate large message load and observe behavior | Code + short observation note | System slowdown and inefficiency | Did they actually simulate load or just write theory? | ✅ **Completed:** Simulated 100,000 messages — measured **1,628x slowdown**. Documented in `april4_observation.md`. |
 | **5 April** | Shards Introduction | Multiple servers available but no distribution logic | Create shards and store data separately | Code showing messages per shard | Confusion about routing logic | Are shards independent (no global storage)? | ✅ **Completed:** 3 independent shards verified. Messages per shard output in `april5_shards_introduction.py`. |
 | **6 April** | User-Based Sharding | One highly active user sends massive traffic | Route using user_id | Code + shard distribution output | Load imbalance (one shard overloaded) | Do they show uneven distribution clearly? | ✅ **Completed:** Influencer (user_id=7) caused Shard 1 to hit **66.2% load**. Hotspot warning triggered. See `april6_user_based_sharding.py`. |
-| **7 April** | Channel-Based Sharding | One channel becomes viral (event spike) | Route using channel_id | Code + comparison note | Hotspot problem (single shard overload) | Do they compare with previous strategy properly? | ⏳ Pending |
+| **7 April** | Channel-Based Sharding | One channel becomes viral (event spike) | Route using channel_id | Code + comparison note | Hotspot problem (single shard overload) | Do they compare with previous strategy properly? | ✅ **Completed:** Viral channel hit **85.7% load** on one shard. Direct comparison with April 6 included. See `april7_channel_based_sharding.py`. |
 | **8 April** | Hash-Based Sharding | Need better distribution under uneven load | Implement hashing and choose key | Code + explanation of key choice | Decision complexity (what to hash?) | Do they justify their choice logically? | ⏳ Pending |
 | **9 April** | Stress + Failure Simulation | Normal load, spike load, and one server failure | Run simulations, disable one shard, test system | Logs + final code + analysis | Failure handling, data loss, inconsistency | Do they observe and explain failure impact? | ⏳ Pending |
 
@@ -65,3 +65,17 @@ This document tracks the daily progress of the scalable chat system simulation, 
   -  **HOTSPOT WARNING triggered** automatically by built-in detection.
 - **Hidden Complexity Introduced:** Load imbalance. One popular user hijacks an entire shard.
 - **Conclusion documented:** User-based sharding is the "First Wrong Decision" — it breaks under any skewed user activity.
+
+### ✅ April 7: Channel-Based Sharding
+**Focus:** One channel becomes viral (event spike) — route by `channel_id`.
+**What was done:**
+- Created `april7_channel_based_sharding.py` with `ChannelShardManager` routing via `channel_id % num_shards`.
+- **Scenario 1 (Normal load):** 50 channels, 10,000 messages → balanced: ~33% per shard. No hotspot.
+- **Scenario 2 (Viral channel):** channel_id=3 received 8,000 messages → always routed to Shard 0.
+  - Shard 0: **85.7%** of total load  | Shard 1: 7.2% 💤 | Shard 2: 7.0% 💤
+  -  **HOTSPOT WARNING triggered** with others completely idle.
+- **Comparison with April 6:**
+  - User-Based (April 6) under same viral scenario: ~33% balanced — it handles channel spikes fine.
+  - Channel-Based (April 7) under viral scenario: **86.2% on one shard** — catastrophic.
+  - Conclusion: Each strategy fails for different reasons.
+- **Hidden Complexity Introduced:** Hotspot problem — a single viral event funnels ALL traffic into one shard.
