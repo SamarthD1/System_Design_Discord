@@ -12,7 +12,7 @@ This document tracks the daily progress of the scalable chat system simulation, 
 | **5 April** | Shards Introduction | Multiple servers available but no distribution logic | Create shards and store data separately | Code showing messages per shard | Confusion about routing logic | Are shards independent (no global storage)? | ✅ **Completed:** 3 independent shards verified. Messages per shard output in `april5_shards_introduction.py`. |
 | **6 April** | User-Based Sharding | One highly active user sends massive traffic | Route using user_id | Code + shard distribution output | Load imbalance (one shard overloaded) | Do they show uneven distribution clearly? | ✅ **Completed:** Influencer (user_id=7) caused Shard 1 to hit **66.2% load**. Hotspot warning triggered. See `april6_user_based_sharding.py`. |
 | **7 April** | Channel-Based Sharding | One channel becomes viral (event spike) | Route using channel_id | Code + comparison note | Hotspot problem (single shard overload) | Do they compare with previous strategy properly? | ✅ **Completed:** Viral channel hit **85.7% load** on one shard. Direct comparison with April 6 included. See `april7_channel_based_sharding.py`. |
-| **8 April** | Hash-Based Sharding | Need better distribution under uneven load | Implement hashing and choose key | Code + explanation of key choice | Decision complexity (what to hash?) | Do they justify their choice logically? | ⏳ Pending |
+| **8 April** | Hash-Based Sharding | Need better distribution under uneven load | Implement hashing and choose key | Code + explanation of key choice | Decision complexity (what to hash?) | Do they justify their choice logically? | ✅ **Completed:** Chose `message_id` hashing — justified logically. Compared all 3 key options. Shard evolution 3→6 analyzed. See `april8_hash_based_sharding.py`. |
 | **9 April** | Stress + Failure Simulation | Normal load, spike load, and one server failure | Run simulations, disable one shard, test system | Logs + final code + analysis | Failure handling, data loss, inconsistency | Do they observe and explain failure impact? | ⏳ Pending |
 
 ---
@@ -72,10 +72,23 @@ This document tracks the daily progress of the scalable chat system simulation, 
 - Created `april7_channel_based_sharding.py` with `ChannelShardManager` routing via `channel_id % num_shards`.
 - **Scenario 1 (Normal load):** 50 channels, 10,000 messages → balanced: ~33% per shard. No hotspot.
 - **Scenario 2 (Viral channel):** channel_id=3 received 8,000 messages → always routed to Shard 0.
-  - Shard 0: **85.7%** of total load  | Shard 1: 7.2% 💤 | Shard 2: 7.0% 💤
+  - Shard 0: **85.7%** of total load  | Shard 1: 7.2%  | Shard 2: 7.0% 
   -  **HOTSPOT WARNING triggered** with others completely idle.
 - **Comparison with April 6:**
   - User-Based (April 6) under same viral scenario: ~33% balanced — it handles channel spikes fine.
   - Channel-Based (April 7) under viral scenario: **86.2% on one shard** — catastrophic.
   - Conclusion: Each strategy fails for different reasons.
 - **Hidden Complexity Introduced:** Hotspot problem — a single viral event funnels ALL traffic into one shard.
+
+### ✅ April 8: Hash-Based Sharding
+**Focus:** Better distribution under uneven load — implement hashing and choose the key.
+**What was done:**
+- Created `april8_hash_based_sharding.py` with 3 hash managers: `HashByUserID`, `HashByChannelID`, `HashByMessageID`.
+- Compared all 3 key choices on the same viral channel scenario:
+  - Hash `user_id`: ✅ No hotspot — but fails for influencer spikes (April 6 problem persists)
+  - Hash `channel_id`:  Shard 1 hit **85.1% load** — same April 7 problem persists
+  - Hash `message_id`: ✅ ~33% per shard in BOTH viral AND influencer scenarios
+- **Key Choice Justified:** `message_id` chosen because it is globally unique per message — distribution is independent of user/channel activity.
+- **Trade-off documented:** Cross-shard queries become expensive — no data locality.
+- **System Evolution (3→6 shards):** 32% of message IDs remap to different shards after scaling — proving simple hashing fails when shard count changes.
+- **Hidden Complexity Introduced:** Decision complexity — and the limitation that consistent hashing is needed for dynamic scaling.
