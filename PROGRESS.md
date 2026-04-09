@@ -85,9 +85,9 @@ This document tracks the daily progress of the scalable chat system simulation, 
 **What was done:**
 - Created `april8_hash_based_sharding.py` with 3 hash managers: `HashByUserID`, `HashByChannelID`, `HashByMessageID`.
 - Compared all 3 key choices on the same viral channel scenario:
-  - Hash `user_id`: ✅ No hotspot — but fails for influencer spikes (April 6 problem persists)
+  - Hash `user_id`:  No hotspot — but fails for influencer spikes (April 6 problem persists)
   - Hash `channel_id`:  Shard 1 hit **85.1% load** — same April 7 problem persists
-  - Hash `message_id`: ✅ ~33% per shard in BOTH viral AND influencer scenarios
+  - Hash `message_id`:  ~33% per shard in BOTH viral AND influencer scenarios
 - **Key Choice Justified:** `message_id` chosen because it is globally unique per message — distribution is independent of user/channel activity.
 - **Trade-off documented:** Cross-shard queries become expensive — no data locality.
 - **System Evolution (3→6 shards):** 32% of message IDs remap to different shards after scaling — proving simple hashing fails when shard count changes.
@@ -98,9 +98,9 @@ This document tracks the daily progress of the scalable chat system simulation, 
 **What was done:**
 - Created `april9_stress_failure_simulation.py` covering all 4 mandatory parts:
 - **Part 1 — 3 Simulation Scenarios:**
-  - Normal day: 1,000 users, 5,000 msgs → ~33% per shard ✅
-  - Viral event: 80% traffic on channel 5 → still balanced with message_id hash ✅
-  - Extreme spike: 50,000 users + influencer → still balanced ✅
+  - Normal day: 1,000 users, 5,000 msgs → ~33% per shard 
+  - Viral event: 80% traffic on channel 5 → still balanced with message_id hash 
+  - Extreme spike: 50,000 users + influencer → still balanced 
 - **Part 2 — Cross-Shard Query:**
   - Fetched last 10 msgs of channel 5 across all 3 shards
   - Performance cost: O(4020 × 3) — ALL shards must be scanned every time
