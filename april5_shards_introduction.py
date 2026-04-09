@@ -67,9 +67,9 @@ class ShardManager:
         print(f"Each shard has its own storage: {all_unique}")
         print(f"Memory addresses: {['0x' + format(i, 'x') for i in ids]}")
         if all_unique:
-            print("✅ PASS: All shards are fully independent.")
+            print("PASS: All shards are fully independent.")
         else:
-            print("❌ FAIL: Shards share storage — this is a design flaw!")
+            print("FAIL: Shards share storage — this is a design flaw!")
 
 
 def simulate_sharded_system():

@@ -1,13 +1,13 @@
 import random
 import time
 
-# ─────────────────────────────────────────────────────────
+# 
 #  April 6: User-Based Sharding (First Wrong Decision)
-# ─────────────────────────────────────────────────────────
+# 
 # Situation: "Each user will stick to one shard"
 # Real Problem: One influencer sends 5000 messages →
 #               That user alone overloads one shard.
-# ─────────────────────────────────────────────────────────
+# 
 
 class Message:
     def __init__(self, user_id, channel_id, content):
@@ -49,11 +49,11 @@ class ShardManager:
         for shard in self.shards:
             pct = shard.message_count() / total
             if pct > self.overload_threshold:
-                print(f"🔥 HOTSPOT WARNING: Shard {shard.id} has {pct*100:.1f}% of total load! (threshold: {self.overload_threshold*100:.0f}%)")
+                print(f" HOTSPOT WARNING: Shard {shard.id} has {pct*100:.1f}% of total load! (threshold: {self.overload_threshold*100:.0f}%)")
                 shard.is_overloaded = True
                 hotspot_found = True
         if not hotspot_found:
-            print("✅ No hotspot detected. Load is balanced.")
+            print(" No hotspot detected. Load is balanced.")
 
     def print_distribution(self, label=""):
         total = self.get_total_messages()
@@ -64,7 +64,7 @@ class ShardManager:
         for shard in self.shards:
             count = shard.message_count()
             pct = (count / total * 100) if total > 0 else 0
-            status = "🔥 OVERLOADED" if pct > self.overload_threshold * 100 else "✅ OK"
+            status = " OVERLOADED" if pct > self.overload_threshold * 100 else " OK"
             print(f"{'Shard ' + str(shard.id):>10} | {count:>10} | {pct:>9.1f}% | {status:>12}")
         print("-" * 55)
         print(f"{'TOTAL':>10} | {total:>10} |")
@@ -83,9 +83,9 @@ class UserShardManager(ShardManager):
         shard.store(message)
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Scenario 1: Normal Load (balanced users)
-# ─────────────────────────────────────────────────────────
+# 
 def simulate_normal_load(manager, num_users=1000, num_messages=10000):
     for _ in range(num_messages):
         user_id = random.randint(1, num_users)
@@ -93,9 +93,9 @@ def simulate_normal_load(manager, num_users=1000, num_messages=10000):
         manager.send_message(Message(user_id, channel_id, "normal message"))
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Scenario 2: Influencer Load (one user dominates)
-# ─────────────────────────────────────────────────────────
+# 
 def simulate_influencer_load(manager, influencer_user_id=7, influencer_msgs=5000, normal_msgs=5000, num_users=1000):
     # Influencer sends 5000 messages — all go to the same shard
     for _ in range(influencer_msgs):
@@ -110,9 +110,9 @@ def simulate_influencer_load(manager, influencer_user_id=7, influencer_msgs=5000
         manager.send_message(Message(user_id, channel_id, "normal message"))
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Main
-# ─────────────────────────────────────────────────────────
+# 
 if __name__ == "__main__":
     print("=" * 55)
     print("  April 6: User-Based Sharding (First Wrong Decision)")
@@ -149,6 +149,6 @@ if __name__ == "__main__":
     print(f"\n  • Influencer (user_id={influencer_id}) mapped to → Shard {influencer_shard}")
     print(f"  • That shard received {influencer_shard_obj.message_count()} / {total} messages ({influencer_pct:.1f}%)")
     print(f"  • Other shards are relatively idle while Shard {influencer_shard} is overloaded.")
-    print(f"\n  ❌ Conclusion: User-based sharding causes load imbalance.")
+    print(f"\n   Conclusion: User-based sharding causes load imbalance.")
     print(f"     One popular user can single-handedly overload an entire shard.")
     print(f"     This is the 'First Wrong Decision'.")

@@ -1,9 +1,9 @@
 import hashlib
 import random
 
-# ─────────────────────────────────────────────────────────
+# 
 #  April 8: Hash-Based Sharding (Better but Not Perfect)
-# ─────────────────────────────────────────────────────────
+# 
 # Situation: We try to distribute messages evenly using hashing.
 # Real Problem: Even hashing fails when number of shards changes.
 #
@@ -17,7 +17,7 @@ import random
 #  2. It is NOT tied to user activity or channel popularity
 #  3. No single user or channel can overload one shard
 #  4. Trade-off: Cross-shard queries become harder (no affinity)
-# ─────────────────────────────────────────────────────────
+# 
 
 class Message:
     _id_counter = 0
@@ -60,10 +60,10 @@ class ShardManager:
         for shard in self.shards:
             pct = shard.message_count() / total
             if pct > self.overload_threshold:
-                print(f"  🔥 HOTSPOT: Shard {shard.id} has {pct*100:.1f}% load!")
+                print(f"   HOTSPOT: Shard {shard.id} has {pct*100:.1f}% load!")
                 hotspot_found = True
         if not hotspot_found:
-            print("  ✅ No hotspot detected.")
+            print("   No hotspot detected.")
 
     def print_distribution(self, label=""):
         total = self.get_total_messages()
@@ -74,15 +74,15 @@ class ShardManager:
         for shard in self.shards:
             count = shard.message_count()
             pct = (count / total * 100) if total > 0 else 0
-            status = "🔥 OVERLOADED" if pct > self.overload_threshold * 100 else "💤 IDLE" if pct < 5 else "✅ OK"
+            status = " OVERLOADED" if pct > self.overload_threshold * 100 else " IDLE" if pct < 5 else " OK"
             print(f"  {'Shard ' + str(shard.id):>7} | {count:>10} | {pct:>9.1f}% | {status:>14}")
         print("  " + "-" * 52)
         print(f"  {'TOTAL':>7} | {total:>10} |")
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Hash-Based Shard Managers (3 key variations)
-# ─────────────────────────────────────────────────────────
+# 
 
 class HashShardManager(ShardManager):
     """Base hash manager — subclasses decide what key to hash."""
@@ -120,9 +120,9 @@ class HashByMessageID(HashShardManager):
         shard.store(message)
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Simulation Helpers
-# ─────────────────────────────────────────────────────────
+# 
 
 def simulate_viral(manager, viral_channel_id=3, viral_msgs=8000,
                    normal_msgs=2000, num_users=1000, num_channels=50):
@@ -147,9 +147,9 @@ def simulate_influencer(manager, influencer_id=7, influencer_msgs=5000,
         manager.send_message(Message(random.randint(1, num_users), random.randint(1, 50), "normal"))
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  System Evolution: What happens when shards change 3 → 6?
-# ─────────────────────────────────────────────────────────
+# 
 
 def simulate_shard_scaling():
     """
@@ -171,7 +171,7 @@ def simulate_shard_scaling():
         h = int(hashlib.md5(str(key).encode()).hexdigest(), 16)
         shard_3 = h % 3
         shard_6 = h % 6
-        changed = "⚠️  YES" if shard_3 != shard_6 else "✅ NO"
+        changed = "  YES" if shard_3 != shard_6 else " NO"
         if shard_3 != shard_6:
             remapped += 1
         if key in test_keys:  # Only print sample keys for readability
@@ -182,13 +182,13 @@ def simulate_shard_scaling():
     print(f"  → {remapped} / {total_tested} would remap to a DIFFERENT shard after scaling!")
     pct_remapped = remapped / total_tested * 100
     print(f"  → {pct_remapped:.1f}% of data becomes unreachable / misrouted after adding shards.")
-    print(f"\n  ❌ This is the core failure of simple hash-based sharding.")
+    print(f"\n   This is the core failure of simple hash-based sharding.")
     print(f"     Solution in production systems: Consistent Hashing (not covered here).")
 
 
-# ─────────────────────────────────────────────────────────
+# 
 #  Main
-# ─────────────────────────────────────────────────────────
+# 
 
 if __name__ == "__main__":
     print("=" * 60)
@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
     NUM_SHARDS = 3
 
-    # ── Part 1: Compare all 3 hash key choices ────────────
+    #  Part 1: Compare all 3 hash key choices 
     print("\n>>> Part 1: What happens when we hash different keys?")
     print("    (Same viral channel scenario as April 7 for fair comparison)")
 
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     m3.print_distribution("Hash by message_id — OUR CHOICE (viral channel scenario)")
     m3.check_hotspot()
 
-    # ── Part 2: Verify message_id also handles influencer case ──
+    #  Part 2: Verify message_id also handles influencer case 
     print("\n" + "=" * 60)
     print("\n>>> Part 2: Does message_id hash survive the influencer scenario?")
     print("    (Same influencer scenario as April 6)")
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     m4.print_distribution("Hash by message_id — Influencer scenario")
     m4.check_hotspot()
 
-    # ── Part 3: Key Choice Justification ──────────────────
+    #  Part 3: Key Choice Justification 
     print("\n" + "=" * 60)
     print("  KEY CHOICE JUSTIFICATION")
     print("=" * 60)
@@ -237,24 +237,24 @@ if __name__ == "__main__":
   We chose to hash on MESSAGE_ID. Here's why:
 
   Option A — Hash user_id:
-    ❌ Same as April 6. One influencer still overloads one shard.
-    ❌ Popular users still concentrate load on the same shard.
+     Same as April 6. One influencer still overloads one shard.
+     Popular users still concentrate load on the same shard.
 
   Option B — Hash channel_id:
-    ❌ Same as April 7. One viral channel still overloads one shard.
-    ❌ All messages in a trending event go to the same place.
+     Same as April 7. One viral channel still overloads one shard.
+     All messages in a trending event go to the same place.
 
-  Option C — Hash message_id: ✅ OUR CHOICE
-    ✅ Every message gets a globally unique ID.
-    ✅ Distribution is independent of who sent it or which channel.
-    ✅ Even if one user sends 10,000 messages, they spread across all shards.
-    ✅ Even if one channel goes viral, its messages spread across all shards.
+  Option C — Hash message_id:  OUR CHOICE
+     Every message gets a globally unique ID.
+     Distribution is independent of who sent it or which channel.
+     Even if one user sends 10,000 messages, they spread across all shards.
+     Even if one channel goes viral, its messages spread across all shards.
 
   Trade-off of message_id hashing:
-    ⚠️  Cross-shard queries become expensive.
+      Cross-shard queries become expensive.
         "Fetch last 10 messages of channel X" must scan ALL shards.
-    ⚠️  No data locality — related data is spread everywhere.
+      No data locality — related data is spread everywhere.
     """)
 
-    # ── Part 4: System Evolution (3 → 6 shards) ──────────
+    #  Part 4: System Evolution (3 → 6 shards) 
     simulate_shard_scaling()
