@@ -13,7 +13,7 @@ This document tracks the daily progress of the scalable chat system simulation, 
 | **6 April** | User-Based Sharding | One highly active user sends massive traffic | Route using user_id | Code + shard distribution output | Load imbalance (one shard overloaded) | Do they show uneven distribution clearly? | ✅ **Completed:** Influencer (user_id=7) caused Shard 1 to hit **66.2% load**. Hotspot warning triggered. See `april6_user_based_sharding.py`. |
 | **7 April** | Channel-Based Sharding | One channel becomes viral (event spike) | Route using channel_id | Code + comparison note | Hotspot problem (single shard overload) | Do they compare with previous strategy properly? | ✅ **Completed:** Viral channel hit **85.7% load** on one shard. Direct comparison with April 6 included. See `april7_channel_based_sharding.py`. |
 | **8 April** | Hash-Based Sharding | Need better distribution under uneven load | Implement hashing and choose key | Code + explanation of key choice | Decision complexity (what to hash?) | Do they justify their choice logically? | ✅ **Completed:** Chose `message_id` hashing — justified logically. Compared all 3 key options. Shard evolution 3→6 analyzed. See `april8_hash_based_sharding.py`. |
-| **9 April** | Stress + Failure Simulation | Normal load, spike load, and one server failure | Run simulations, disable one shard, test system | Logs + final code + analysis | Failure handling, data loss, inconsistency | Do they observe and explain failure impact? | ⏳ Pending |
+| **9 April** | Stress + Failure Simulation | Normal load, spike load, and one server failure | Run simulations, disable one shard, test system | Logs + final code + analysis | Failure handling, data loss, inconsistency | Do they observe and explain failure impact? | ✅ **Completed:** 3 scenarios run, Shard 1 disabled mid-test (1,675 msgs dropped), cross-shard query with missing data shown. Full analysis in `april9_stress_failure_simulation.py`. |
 
 ---
 
@@ -92,3 +92,26 @@ This document tracks the daily progress of the scalable chat system simulation, 
 - **Trade-off documented:** Cross-shard queries become expensive — no data locality.
 - **System Evolution (3→6 shards):** 32% of message IDs remap to different shards after scaling — proving simple hashing fails when shard count changes.
 - **Hidden Complexity Introduced:** Decision complexity — and the limitation that consistent hashing is needed for dynamic scaling.
+
+### ✅ April 9: Stress + Failure Simulation (FINAL DAY)
+**Focus:** Normal load, spike load, one server failure — run simulations, disable a shard, test system.
+**What was done:**
+- Created `april9_stress_failure_simulation.py` covering all 4 mandatory parts:
+- **Part 1 — 3 Simulation Scenarios:**
+  - Normal day: 1,000 users, 5,000 msgs → ~33% per shard ✅
+  - Viral event: 80% traffic on channel 5 → still balanced with message_id hash ✅
+  - Extreme spike: 50,000 users + influencer → still balanced ✅
+- **Part 2 — Cross-Shard Query:**
+  - Fetched last 10 msgs of channel 5 across all 3 shards
+  - Performance cost: O(4020 × 3) — ALL shards must be scanned every time
+- **Part 3 — Failure Simulation:**
+  - Shard 1 disabled mid-test after 5,000 messages
+  - Phase 2: **1,675 messages DROPPED** (routed to offline shard)
+  - Cross-shard query returned incomplete results (Shard 1 data inaccessible)
+  - Hotspot detected on Shard 2 (50.7%) after Shard 1 went offline
+- **Part 4 — Final Analysis (all 4 questions answered):**
+  - Q1: User-based → Shard 1 fails first (66.2%). Channel-based → Shard 0 fails first (85.7%)
+  - Q2: Channel-Based Sharding appeared balanced then catastrophically failed at 85.7% on spike
+  - Q3: Scaling 3→10 remaps ~70%+ of keys — needs Consistent Hashing
+  - Q4: Shard failure → dropped msgs, lost data, incomplete queries, no auto-redistribution
+- **Hidden Complexity Introduced:** Failure handling, data loss, inconsistency, and the limits of all 3 strategies.
